@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_textfield.dart';
@@ -19,6 +20,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   final AuthService _authService = AuthService();
   bool isLoading = false;
+
+  String? nameError;
+  String? emailError;
+  String? passwordError;
+  String? confirmPasswordError;
 
   bool _isValidEmail(String email) {
     final emailRegex =
@@ -42,8 +48,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Colors.blueAccent, Colors.indigo],
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
           ),
         ),
         child: Center(
@@ -58,21 +62,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 padding: const EdgeInsets.all(24),
                 child: SingleChildScrollView(
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        "Create Account",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      const Text("Create Account",
+                          style: TextStyle(
+                              fontSize: 24, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 20),
 
                       CustomTextField(
                         hint: "Full Name",
                         icon: Icons.person,
                         controller: nameController,
+                        errorText: nameError,
                       ),
                       const SizedBox(height: 16),
 
@@ -80,6 +80,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         hint: "Email",
                         icon: Icons.email,
                         controller: emailController,
+                        errorText: emailError,
                       ),
                       const SizedBox(height: 16),
 
@@ -88,6 +89,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         icon: Icons.lock,
                         isPassword: true,
                         controller: passwordController,
+                        errorText: passwordError,
                       ),
                       const SizedBox(height: 16),
 
@@ -96,6 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         icon: Icons.lock_outline,
                         isPassword: true,
                         controller: confirmPasswordController,
+                        errorText: confirmPasswordError,
                       ),
                       const SizedBox(height: 24),
 
@@ -126,31 +129,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = passwordController.text.trim();
     final confirmPassword = confirmPasswordController.text.trim();
 
+    setState(() {
+      nameError = null;
+      emailError = null;
+      passwordError = null;
+      confirmPasswordError = null;
+    });
+
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Full name required")),
-      );
+      setState(() => nameError = "Full name required");
       return;
     }
 
     if (!_isValidEmail(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Enter valid email address")),
-      );
+      setState(() => emailError = "Enter valid email address");
       return;
     }
 
     if (password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Password must be at least 6 characters")),
-      );
+      setState(() => passwordError = "Minimum 6 characters required");
       return;
     }
 
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords do not match")),
-      );
+      setState(() => confirmPasswordError = "Passwords do not match");
       return;
     }
 
@@ -164,18 +166,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Registration successful! Please verify your email."),
-        ),
-      );
-
       Navigator.pop(context);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll("Exception:", ""))),
-      );
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'email-already-in-use') {
+          emailError = "Email already registered";
+        } else {
+          emailError = "Registration failed";
+        }
+      });
     } finally {
       if (mounted) setState(() => isLoading = false);
     }

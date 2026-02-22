@@ -49,12 +49,12 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
           ),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            /// -------- COURSE NAME (TEXT FIELD NOW) --------
             _buildStyledBox(
               TextField(
                 controller: courseNameController,
@@ -67,7 +67,6 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
 
             const SizedBox(height: 15),
 
-            /// -------- ASSIGN TEACHER --------
             _buildStyledBox(
               StreamBuilder<QuerySnapshot>(
                 stream: _firestore
@@ -155,12 +154,9 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
 
             const SizedBox(height: 10),
 
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Select Class Days",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+            const Text(
+              "Select Class Days",
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
 
             Wrap(
@@ -208,118 +204,119 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
-            /// -------- COURSE LIST --------
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: _firestore
-                    .collection("courses")
-                    .orderBy("createdAt", descending: true)
-                    .snapshots(),
-                builder: (context, snapshot) {
+            StreamBuilder<QuerySnapshot>(
+              stream: _firestore
+                  .collection("courses")
+                  .orderBy("createdAt", descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
 
-                  if (!snapshot.hasData) {
-                    return const CircularProgressIndicator();
-                  }
+                if (!snapshot.hasData) {
+                  return const Center(
+                      child: CircularProgressIndicator());
+                }
 
-                  final courses = snapshot.data!.docs;
+                final courses = snapshot.data!.docs;
 
-                  return ListView.builder(
-                    itemCount: courses.length,
-                    itemBuilder: (context, index) {
+                return ListView.builder(
+                  itemCount: courses.length,
+                  shrinkWrap: true,
+                  physics:
+                      const NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
 
-                      final doc = courses[index];
-                      final data =
-                          doc.data() as Map<String, dynamic>;
+                    final doc = courses[index];
+                    final data =
+                        doc.data() as Map<String, dynamic>;
 
-                      final name = data["name"] ?? "";
-                      final count =
-                          (data["students"] ?? []).length;
+                    final name = data["name"] ?? "";
+                    final count =
+                        (data["students"] ?? []).length;
 
-                      return Container(
-                        margin:
-                            const EdgeInsets.only(bottom: 15),
-                        decoration: BoxDecoration(
-                          gradient:
-                              const LinearGradient(
-                            colors: [
-                              Colors.indigo,
-                              Colors.blueAccent
-                            ],
-                          ),
-                          borderRadius:
-                              BorderRadius.circular(15),
+                    return Container(
+                      margin:
+                          const EdgeInsets.only(bottom: 15),
+                      decoration: BoxDecoration(
+                        gradient:
+                            const LinearGradient(
+                          colors: [
+                            Colors.indigo,
+                            Colors.blueAccent
+                          ],
                         ),
-                        child: ListTile(
-                          contentPadding:
-                              const EdgeInsets.all(16),
-                          title: Text(
-                            name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight:
-                                  FontWeight.bold,
+                        borderRadius:
+                            BorderRadius.circular(15),
+                      ),
+                      child: ListTile(
+                        contentPadding:
+                            const EdgeInsets.all(16),
+                        title: Text(
+                          name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight:
+                                FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "Students: $count",
+                          style: const TextStyle(
+                              color: Colors.white70),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  ViewEnrolledStudentsScreen(
+                                courseId: doc.id,
+                                courseName: name,
+                              ),
                             ),
-                          ),
-                          subtitle: Text(
-                            "Students: $count",
-                            style: const TextStyle(
-                                color: Colors.white70),
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    ViewEnrolledStudentsScreen(
-                                  courseId: doc.id,
-                                  courseName: name,
-                                ),
-                              ),
-                            );
-                          },
-                          trailing:
-                              PopupMenuButton<String>(
-                            icon: const Icon(
-                                Icons.more_vert,
-                                color: Colors.white),
-                            onSelected: (value) {
-                              if (value == "assign") {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        AssignStudentsScreen(
-                                      courseId: doc.id,
-                                      courseName: name,
-                                    ),
+                          );
+                        },
+                        trailing:
+                            PopupMenuButton<String>(
+                          icon: const Icon(
+                              Icons.more_vert,
+                              color: Colors.white),
+                          onSelected: (value) {
+                            if (value == "assign") {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      AssignStudentsScreen(
+                                    courseId: doc.id,
+                                    courseName: name,
                                   ),
-                                );
-                              }
+                                ),
+                              );
+                            }
 
-                              if (value == "delete") {
-                                _deleteCourse(doc.id);
-                              }
-                            },
-                            itemBuilder: (context) => const [
-                              PopupMenuItem(
-                                value: "assign",
-                                child:
-                                    Text("Assign Students"),
-                              ),
-                              PopupMenuItem(
-                                value: "delete",
-                                child: Text("Delete"),
-                              ),
-                            ],
-                          ),
+                            if (value == "delete") {
+                              _deleteCourse(doc.id);
+                            }
+                          },
+                          itemBuilder: (context) => const [
+                            PopupMenuItem(
+                              value: "assign",
+                              child:
+                                  Text("Assign Students"),
+                            ),
+                            PopupMenuItem(
+                              value: "delete",
+                              child: Text("Delete"),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ],
         ),

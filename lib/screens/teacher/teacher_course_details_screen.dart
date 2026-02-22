@@ -108,7 +108,8 @@ class TeacherCourseDetailsScreen extends StatelessWidget {
                           .get(),
                       builder: (context, studentSnapshot) {
 
-                        if (!studentSnapshot.hasData) {
+                        if (!studentSnapshot.hasData ||
+                            !studentSnapshot.data!.exists) {
                           return const SizedBox();
                         }
 
@@ -116,14 +117,20 @@ class TeacherCourseDetailsScreen extends StatelessWidget {
                             studentSnapshot.data!.data()
                                 as Map<String, dynamic>;
 
+                        final studentName =
+                            studentData["name"] ?? "No Name";
+
+                        final studentId =
+                            studentData["studentId"] ?? "No ID";
+
                         return Card(
                           child: ListTile(
                             leading: const Icon(
                               Icons.person,
                               color: Colors.indigo,
                             ),
-                            title: Text(studentData["name"] ?? "No Name"),
-                            subtitle: Text(studentData["email"] ?? ""),
+                            title: Text(studentName),
+                            subtitle: Text("Student ID: $studentId"),
                           ),
                         );
                       },

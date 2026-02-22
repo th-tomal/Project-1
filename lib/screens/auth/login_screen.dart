@@ -19,6 +19,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool isLoading = false;
 
+  String? emailError;
+  String? passwordError;
+
   static const String adminEmail = "admin@smartcoach.com";
 
   @override
@@ -37,89 +40,87 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.indigo, Colors.blueAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      resizeToAvoidBottomInset: true,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.indigo, Colors.blueAccent],
+            ),
           ),
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              elevation: 8,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.school,
-                      size: 60,
-                      color: Colors.indigo,
-                    ),
-                    const SizedBox(height: 10),
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                elevation: 8,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.school,
+                          size: 60, color: Colors.indigo),
+                      const SizedBox(height: 10),
+                      const Text("SmartCoach",
+                          style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 6),
+                      const Text("Login to continue",
+                          style: TextStyle(color: Colors.grey)),
+                      const SizedBox(height: 24),
 
-                    const Text(
-                      "SmartCoach",
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
+                      CustomTextField(
+                        hint: "Email",
+                        icon: Icons.email,
+                        controller: emailController,
+                        errorText: emailError,
                       ),
-                    ),
-                    const SizedBox(height: 6),
+                      const SizedBox(height: 16),
 
-                    Text(
-                      "Login to continue",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 24),
-
-                    CustomTextField(
-                      hint: "Email",
-                      icon: Icons.email,
-                      controller: emailController,
-                    ),
-                    const SizedBox(height: 16),
-
-                    CustomTextField(
-                      hint: "Password",
-                      icon: Icons.lock,
-                      isPassword: true,
-                      controller: passwordController,
-                    ),
-                    const SizedBox(height: 10),
-
-                    // 🔥 FORGOT PASSWORD BUTTON
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: _handleForgotPassword,
-                        child: const Text("Forgot Password?"),
+                      CustomTextField(
+                        hint: "Password",
+                        icon: Icons.lock,
+                        isPassword: true,
+                        controller: passwordController,
+                        errorText: passwordError,
                       ),
-                    ),
+                      const SizedBox(height: 10),
 
-                    const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _handleForgotPassword,
+                          child: const Text("Forgot Password?"),
+                        ),
+                      ),
 
-                    CustomButton(
-                      text: isLoading ? "Logging in..." : "Login",
-                      onPressed: isLoading ? null : _handleLogin,
-                    ),
+                      const SizedBox(height: 10),
 
-                    const SizedBox(height: 10),
+                      CustomButton(
+                        text: isLoading
+                            ? "Logging in..."
+                            : "Login",
+                        onPressed:
+                            isLoading ? null : _handleLogin,
+                      ),
 
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/register');
-                      },
-                      child: const Text("Create new account"),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(
+                              context, '/register');
+                        },
+                        child:
+                            const Text("Create new account"),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -129,18 +130,28 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ================= LOGIN FUNCTION =================
+  // ================= LOGIN =================
   Future<void> _handleLogin() async {
-    final email = emailController.text.trim().toLowerCase();
-    final password = passwordController.text.trim();
+    FocusScope.of(context).unfocus();
+
+    final email =
+        emailController.text.trim().toLowerCase();
+    final password =
+        passwordController.text.trim();
+
+    setState(() {
+      emailError = null;
+      passwordError = null;
+    });
 
     if (!_isValidEmail(email)) {
-      _showMessage("Enter valid email address");
+      setState(
+          () => emailError = "Enter valid email address");
       return;
     }
 
     if (password.isEmpty) {
-      _showMessage("Password required");
+      setState(() => passwordError = "Password required");
       return;
     }
 
@@ -148,61 +159,80 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       await _authService.login(
-        email: email,
-        password: password,
-      );
+          email: email, password: password);
 
-      final user = FirebaseAuth.instance.currentUser;
+      final user =
+          FirebaseAuth.instance.currentUser;
 
-      // 🔥 Skip verification only for admin
       if (email != adminEmail) {
         if (user != null && !user.emailVerified) {
           await FirebaseAuth.instance.signOut();
-          throw "Please verify your email before logging in.";
+          throw FirebaseAuthException(
+              code: 'email-not-verified');
         }
       }
 
-      final role = await _authService.getUserRole();
+      final role =
+          await _authService.getUserRole();
 
       if (!mounted) return;
 
       switch (role) {
         case "admin":
-          Navigator.pushReplacementNamed(context, '/adminDashboard');
+          Navigator.pushReplacementNamed(
+              context, '/adminDashboard');
           break;
         case "teacher":
-          Navigator.pushReplacementNamed(context, '/teacherDashboard');
+          Navigator.pushReplacementNamed(
+              context, '/teacherDashboard');
           break;
         default:
-          Navigator.pushReplacementNamed(context, '/studentDashboard');
+          Navigator.pushReplacementNamed(
+              context, '/studentDashboard');
       }
-    } catch (e) {
-      _showMessage(e.toString().replaceAll("Exception:", ""));
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'user-not-found') {
+          emailError = "Email not found";
+        } else if (e.code == 'wrong-password') {
+          passwordError = "Incorrect password";
+        } else if (e.code == 'invalid-email') {
+          emailError = "Invalid email format";
+        } else if (e.code == 'email-not-verified') {
+          emailError =
+              "Please verify your email first";
+        } else {
+          passwordError =
+              "Email or password is incorrect";
+        }
+      });
     } finally {
-      if (mounted) setState(() => isLoading = false);
+      if (mounted)
+        setState(() => isLoading = false);
     }
   }
 
   // ================= FORGOT PASSWORD =================
   Future<void> _handleForgotPassword() async {
-    final email = emailController.text.trim().toLowerCase();
+    FocusScope.of(context).unfocus();
+
+    final email =
+        emailController.text.trim().toLowerCase();
 
     if (!_isValidEmail(email)) {
-      _showMessage("Enter your registered email first");
+      setState(
+          () => emailError = "Enter valid email first");
       return;
     }
 
     try {
-      await _authService.sendPasswordResetEmail(email);
-      _showMessage("Password reset email sent!");
-    } catch (e) {
-      _showMessage(e.toString().replaceAll("Exception:", ""));
+      await _authService
+          .sendPasswordResetEmail(email);
+      setState(() =>
+          emailError = "Password reset email sent");
+    } catch (_) {
+      setState(() =>
+          emailError = "Failed to send reset email");
     }
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 }

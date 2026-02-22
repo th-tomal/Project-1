@@ -169,13 +169,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           ),
 
           _TeacherCard(
-            "Attendance",
-            Icons.check_circle,
-            Colors.green,
-            () {},
-          ),
-
-          _TeacherCard(
             "Marks Entry",
             Icons.edit_note,
             Colors.orange,

@@ -49,6 +49,7 @@ class TeacherStudentsMarksScreen extends StatelessWidget {
 
               final studentName = data["studentName"] ?? "No Name";
               final studentId = data["studentId"] ?? "No ID";
+              final isMarked = data["marked"] ?? false;
 
               return Card(
                 child: ListTile(
@@ -59,6 +60,10 @@ class TeacherStudentsMarksScreen extends StatelessWidget {
                   title: Text(studentName),
                   subtitle: Text("Student ID: $studentId"),
                   trailing: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          isMarked ? Colors.orange : Colors.indigo,
+                    ),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -72,7 +77,9 @@ class TeacherStudentsMarksScreen extends StatelessWidget {
                         ),
                       );
                     },
-                    child: const Text("Enter Marks"),
+                    child: Text(
+                      isMarked ? "Edit Marks" : "Enter Marks",
+                    ),
                   ),
                 ),
               );

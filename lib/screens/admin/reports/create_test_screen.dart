@@ -17,7 +17,6 @@ class CreateTestScreen extends StatefulWidget {
 }
 
 class _CreateTestScreenState extends State<CreateTestScreen> {
-
   final _nameController = TextEditingController();
   String _selectedType = "mock";
   DateTime? _selectedDate;
@@ -47,10 +46,8 @@ class _CreateTestScreenState extends State<CreateTestScreen> {
       _selectedDate = date;
       _selectedTime = TimeOfDay.fromDateTime(date);
 
-      _selectedTeacherId =
-          widget.existingData!["assignedTeacherId"];
-      _selectedTeacherName =
-          widget.existingData!["assignedTeacherName"];
+      _selectedTeacherId = widget.existingData!["assignedTeacherId"];
+      _selectedTeacherName = widget.existingData!["assignedTeacherName"];
     }
   }
 
@@ -79,7 +76,6 @@ class _CreateTestScreenState extends State<CreateTestScreen> {
   }
 
   Future<void> _saveTest() async {
-
     if (_selectedDate == null ||
         _nameController.text.trim().isEmpty ||
         _selectedTeacherId == null) {
@@ -129,20 +125,20 @@ class _CreateTestScreenState extends State<CreateTestScreen> {
 
   Widget _styledContainer(Widget child) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: Colors.black12,
-          width: 1.2,
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 18,
-            spreadRadius: 2,
-            offset: const Offset(0, 10),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            spreadRadius: 1,
+            offset: const Offset(0, 4),
           )
         ],
       ),
@@ -152,47 +148,54 @@ class _CreateTestScreenState extends State<CreateTestScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     final isEditing = widget.testId != null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFE9EEF6),
       appBar: AppBar(
-        title: Text(isEditing ? "Edit Test" : "Create Test"),
+        title: Text(
+          isEditing ? "Edit Test" : "Create Test",
+          style: const TextStyle(fontSize: 18),
+        ),
         backgroundColor: Colors.indigo,
         centerTitle: true,
         elevation: 0,
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         child: SingleChildScrollView(
           child: Column(
             children: [
-
               _styledContainer(
                 TextField(
                   controller: _nameController,
+                  style: const TextStyle(fontSize: 14),
                   decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.edit_note, color: Colors.indigo),
+                    isDense: true,
+                    prefixIcon: Icon(Icons.edit_note, color: Colors.indigo, size: 20),
                     labelText: "Test Name",
                     border: InputBorder.none,
                   ),
                 ),
               ),
 
-              const SizedBox(height: 22),
+              const SizedBox(height: 16),
 
               _styledContainer(
                 DropdownButtonFormField(
                   value: _selectedType,
                   decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.category, color: Colors.indigo),
+                    isDense: true,
+                    prefixIcon: Icon(Icons.category, color: Colors.indigo, size: 20),
                     border: InputBorder.none,
                   ),
                   items: testTypes.map((type) {
                     return DropdownMenuItem(
                       value: type,
-                      child: Text(type.toUpperCase()),
+                      child: Text(
+                        type.toUpperCase(),
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -203,7 +206,7 @@ class _CreateTestScreenState extends State<CreateTestScreen> {
                 ),
               ),
 
-              const SizedBox(height: 22),
+              const SizedBox(height: 16),
 
               _styledContainer(
                 StreamBuilder<QuerySnapshot>(
@@ -212,10 +215,17 @@ class _CreateTestScreenState extends State<CreateTestScreen> {
                       .where("role", isEqualTo: "teacher")
                       .snapshots(),
                   builder: (context, snapshot) {
-
                     if (!snapshot.hasData) {
                       return const Center(
-                          child: CircularProgressIndicator(color: Colors.indigo));
+                        child: SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.indigo,
+                          ),
+                        ),
+                      );
                     }
 
                     final teachers = snapshot.data!.docs;
@@ -223,7 +233,8 @@ class _CreateTestScreenState extends State<CreateTestScreen> {
                     return DropdownButtonFormField<String>(
                       value: _selectedTeacherId,
                       decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.person, color: Colors.indigo),
+                        isDense: true,
+                        prefixIcon: Icon(Icons.person, color: Colors.indigo, size: 20),
                         labelText: "Assign Teacher",
                         border: InputBorder.none,
                       ),
@@ -233,7 +244,10 @@ class _CreateTestScreenState extends State<CreateTestScreen> {
 
                         return DropdownMenuItem<String>(
                           value: doc.id,
-                          child: Text(data["name"] ?? "No Name"),
+                          child: Text(
+                            data["name"] ?? "No Name",
+                            style: const TextStyle(fontSize: 14),
+                          ),
                         );
                       }).toList(),
                       onChanged: (value) {
@@ -253,15 +267,19 @@ class _CreateTestScreenState extends State<CreateTestScreen> {
                 ),
               ),
 
-              const SizedBox(height: 22),
+              const SizedBox(height: 16),
 
               _styledContainer(
                 ListTile(
-                  leading: const Icon(Icons.calendar_today, color: Colors.indigo),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.calendar_today,
+                      color: Colors.indigo, size: 20),
                   title: Text(
                     _selectedDate == null
                         ? "Select Date"
                         : "${_selectedDate!.day}-${_selectedDate!.month}-${_selectedDate!.year}",
+                    style: const TextStyle(fontSize: 14),
                   ),
                   onTap: _pickDate,
                 ),
@@ -269,45 +287,48 @@ class _CreateTestScreenState extends State<CreateTestScreen> {
 
               if (_selectedType == "mock")
                 Padding(
-                  padding: const EdgeInsets.only(top: 22),
+                  padding: const EdgeInsets.only(top: 16),
                   child: _styledContainer(
                     ListTile(
-                      leading: const Icon(Icons.access_time, color: Colors.indigo),
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.access_time,
+                          color: Colors.indigo, size: 20),
                       title: Text(
                         _selectedTime == null
                             ? "Select Time"
                             : _selectedTime!.format(context),
+                        style: const TextStyle(fontSize: 14),
                       ),
                       onTap: _pickTime,
                     ),
                   ),
                 ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 28),
 
               SizedBox(
                 width: double.infinity,
-                height: 55,
+                height: 45,
                 child: ElevatedButton(
                   onPressed: _saveTest,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.indigo,
-                    foregroundColor: Colors.white, // ✅ FIXED
-                    elevation: 8,
+                    foregroundColor: Colors.white,
+                    elevation: 4,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: Text(
                     isEditing ? "Update Test" : "Create Test",
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
-
             ],
           ),
         ),

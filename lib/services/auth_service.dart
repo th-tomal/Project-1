@@ -13,35 +13,30 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    try {
-      final userCredential =
-          await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+    final userCredential =
+        await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
 
-      final user = userCredential.user!;
-      final uid = user.uid;
+    final user = userCredential.user!;
+    final uid = user.uid;
 
-      final role = email.toLowerCase() == adminEmail
-          ? UserRole.admin.value
-          : UserRole.student.value;
+    final role = email.toLowerCase() == adminEmail
+        ? UserRole.admin.value
+        : UserRole.student.value;
 
-      // 🔥 Send email verification only for NON-admin
-      if (email.toLowerCase() != adminEmail) {
-        await user.sendEmailVerification();
-      }
-
-      await _db.collection("users").doc(uid).set({
-        "name": name,
-        "email": email,
-        "role": role,
-        "createdAt": FieldValue.serverTimestamp(),
-      });
-
-    } on FirebaseAuthException catch (e) {
-      throw Exception(e.message ?? "Registration failed");
+    // Send verification for non-admin
+    if (email.toLowerCase() != adminEmail) {
+      await user.sendEmailVerification();
     }
+
+    await _db.collection("users").doc(uid).set({
+      "name": name,
+      "email": email,
+      "role": role,
+      "createdAt": FieldValue.serverTimestamp(),
+    });
   }
 
   // ================= LOGIN =================
@@ -49,23 +44,17 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    try {
-      await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-    } on FirebaseAuthException catch (e) {
-      throw Exception(e.message ?? "Login failed");
-    }
+    // ❗ DO NOT wrap in try-catch
+    // Let FirebaseAuthException go back to UI
+    await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
   // ================= FORGOT PASSWORD =================
   Future<void> sendPasswordResetEmail(String email) async {
-    try {
-      await _auth.sendPasswordResetEmail(email: email);
-    } on FirebaseAuthException catch (e) {
-      throw Exception(e.message ?? "Failed to send reset email");
-    }
+    await _auth.sendPasswordResetEmail(email: email);
   }
 
   // ================= RESEND VERIFICATION =================
