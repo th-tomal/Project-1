@@ -17,7 +17,7 @@ class CustomTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: controller, // ✅ FIX
+      controller: controller,
       obscureText: isPassword,
       decoration: InputDecoration(
         hintText: hint,

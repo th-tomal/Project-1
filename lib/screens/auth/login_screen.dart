@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_textfield.dart';
 
@@ -10,7 +12,27 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  String selectedRole = 'admin'; // admin / teacher / student
+  final AuthService _authService = AuthService();
+
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  bool isLoading = false;
+
+  static const String adminEmail = "admin@smartcoach.com";
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  bool _isValidEmail(String email) {
+    final emailRegex =
+        RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return emailRegex.hasMatch(email);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,61 +76,43 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     Text(
                       "Login to continue",
-                      style: TextStyle(color: Colors.grey.shade600),
+                      style: TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 24),
 
-                    const CustomTextField(
+                    CustomTextField(
                       hint: "Email",
                       icon: Icons.email,
+                      controller: emailController,
                     ),
                     const SizedBox(height: 16),
 
-                    const CustomTextField(
+                    CustomTextField(
                       hint: "Password",
                       icon: Icons.lock,
                       isPassword: true,
+                      controller: passwordController,
                     ),
+                    const SizedBox(height: 10),
 
-                    const SizedBox(height: 20),
-
-                    // 🔽 LOGIN AS SECTION
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Login as",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                    // 🔥 FORGOT PASSWORD BUTTON
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _handleForgotPassword,
+                        child: const Text("Forgot Password?"),
                       ),
                     ),
-                    const SizedBox(height: 8),
 
-                    Row(
-                      children: [
-                        roleButton("Admin"),
-                        roleButton("Teacher"),
-                        roleButton("Student"),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 10),
 
                     CustomButton(
-                      text: "Login",
-                      onPressed: () {
-                        if (selectedRole == 'admin') {
-                          Navigator.pushReplacementNamed(
-                              context, '/adminDashboard');
-                        } else if (selectedRole == 'teacher') {
-                          Navigator.pushReplacementNamed(
-                              context, '/teacherDashboard');
-                        } else {
-                          Navigator.pushReplacementNamed(
-                              context, '/studentDashboard');
-                        }
-                      },
+                      text: isLoading ? "Logging in..." : "Login",
+                      onPressed: isLoading ? null : _handleLogin,
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
+
                     TextButton(
                       onPressed: () {
                         Navigator.pushNamed(context, '/register');
@@ -125,35 +129,80 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // 🔹 ROLE BUTTON WIDGET
-  Widget roleButton(String role) {
-    final bool isSelected = selectedRole == role.toLowerCase();
+  // ================= LOGIN FUNCTION =================
+  Future<void> _handleLogin() async {
+    final email = emailController.text.trim().toLowerCase();
+    final password = passwordController.text.trim();
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedRole = role.toLowerCase();
-          });
-        },
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.indigo : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.indigo),
-          ),
-          child: Text(
-            role,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.indigo,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
+    if (!_isValidEmail(email)) {
+      _showMessage("Enter valid email address");
+      return;
+    }
+
+    if (password.isEmpty) {
+      _showMessage("Password required");
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      await _authService.login(
+        email: email,
+        password: password,
+      );
+
+      final user = FirebaseAuth.instance.currentUser;
+
+      // 🔥 Skip verification only for admin
+      if (email != adminEmail) {
+        if (user != null && !user.emailVerified) {
+          await FirebaseAuth.instance.signOut();
+          throw "Please verify your email before logging in.";
+        }
+      }
+
+      final role = await _authService.getUserRole();
+
+      if (!mounted) return;
+
+      switch (role) {
+        case "admin":
+          Navigator.pushReplacementNamed(context, '/adminDashboard');
+          break;
+        case "teacher":
+          Navigator.pushReplacementNamed(context, '/teacherDashboard');
+          break;
+        default:
+          Navigator.pushReplacementNamed(context, '/studentDashboard');
+      }
+    } catch (e) {
+      _showMessage(e.toString().replaceAll("Exception:", ""));
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  // ================= FORGOT PASSWORD =================
+  Future<void> _handleForgotPassword() async {
+    final email = emailController.text.trim().toLowerCase();
+
+    if (!_isValidEmail(email)) {
+      _showMessage("Enter your registered email first");
+      return;
+    }
+
+    try {
+      await _authService.sendPasswordResetEmail(email);
+      _showMessage("Password reset email sent!");
+    } catch (e) {
+      _showMessage(e.toString().replaceAll("Exception:", ""));
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }

@@ -1,0 +1,54 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "smartcoach-ce3e4",
+          "appId": "1:778030115762:android:f6557d2afb4765707ed2ab",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "smartcoach-ce3e4",
+          "appId": "1:778030115762:ios:518b2400599c535c7ed2ab",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "smartcoach-ce3e4",
+          "appId": "1:778030115762:ios:518b2400599c535c7ed2ab",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "smartcoach-ce3e4",
+          "configurations": {
+            "android": "1:778030115762:android:f6557d2afb4765707ed2ab",
+            "ios": "1:778030115762:ios:518b2400599c535c7ed2ab",
+            "macos": "1:778030115762:ios:518b2400599c535c7ed2ab",
+            "web": "1:778030115762:web:9ff96f1aee8138c37ed2ab",
+            "windows": "1:778030115762:web:08e9850b7e8613707ed2ab"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

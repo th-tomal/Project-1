@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/constants.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_textfield.dart';
 
@@ -16,6 +16,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
+
+  final AuthService _authService = AuthService();
+  bool isLoading = false;
+
+  bool _isValidEmail(String email) {
+    final emailRegex =
+        RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return emailRegex.hasMatch(email);
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,52 +100,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: 24),
 
                       CustomButton(
-                        text: "Register",
-                        onPressed: () {
-                          final String email =
-                              emailController.text.trim().toLowerCase();
-
-                          // 🔒 Basic validation
-                          if (passwordController.text !=
-                              confirmPasswordController.text) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text("Passwords do not match")),
-                            );
-                            return;
-                          }
-
-                          // 🧠 ROLE DECISION
-                          String role;
-                          if (email == adminEmail) {
-                            role = "admin";
-                          } else {
-                            role = "student";
-                          }
-
-                          // TEMP: show role result
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Registered as: $role"),
-                            ),
-                          );
-
-                          // 🔀 Navigate based on role
-                          if (role == "admin") {
-                            Navigator.pushReplacementNamed(
-                                context, '/adminDashboard');
-                          } else {
-                            Navigator.pushReplacementNamed(
-                                context, '/studentDashboard');
-                          }
-                        },
+                        text: isLoading ? "Registering..." : "Register",
+                        onPressed: isLoading ? null : _handleRegister,
                       ),
 
                       const SizedBox(height: 12),
                       TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
+                        onPressed: () => Navigator.pop(context),
                         child: const Text("Already have an account? Login"),
                       ),
                     ],
@@ -139,5 +118,66 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleRegister() async {
+    final name = nameController.text.trim();
+    final email = emailController.text.trim().toLowerCase();
+    final password = passwordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Full name required")),
+      );
+      return;
+    }
+
+    if (!_isValidEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Enter valid email address")),
+      );
+      return;
+    }
+
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Password must be at least 6 characters")),
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Passwords do not match")),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      await _authService.register(
+        name: name,
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Registration successful! Please verify your email."),
+        ),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceAll("Exception:", ""))),
+      );
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 }

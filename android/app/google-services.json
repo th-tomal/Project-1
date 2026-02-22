@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "778030115762",
+    "project_id": "smartcoach-ce3e4",
+    "storage_bucket": "smartcoach-ce3e4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:778030115762:android:f6557d2afb4765707ed2ab",
+        "android_client_info": {
+          "package_name": "com.example.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZ48YEwwU1-ZSlcAhM2UX_2oK-EaZkVec"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:778030115762:android:0320dc8b97de3bc47ed2ab",
+        "android_client_info": {
+          "package_name": "com.example.smartcoach"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZ48YEwwU1-ZSlcAhM2UX_2oK-EaZkVec"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
